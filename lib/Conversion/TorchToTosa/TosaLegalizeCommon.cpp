@@ -1136,22 +1136,49 @@ LogicalResult getIntegerClampAttrs(ConversionPatternRewriter &rewriter,
   int64_t finalMin, finalMax;
   unsigned bitwidth = elemTy.getIntOrFloatBitWidth();
 
+  // Check if the integer type is unsigned to select appropriate limits
+  bool isUnsigned = false;
+  if (auto intTy = dyn_cast<IntegerType>(elemTy)) {
+    isUnsigned = intTy.isUnsigned();
+  }
+
   switch (bitwidth) {
   case 8:
-    finalMin = minInt.value_or(std::numeric_limits<int8_t>::min());
-    finalMax = maxInt.value_or(std::numeric_limits<int8_t>::max());
+    if (isUnsigned) {
+      finalMin = minInt.value_or(std::numeric_limits<uint8_t>::min());
+      finalMax = maxInt.value_or(std::numeric_limits<uint8_t>::max());
+    } else {
+      finalMin = minInt.value_or(std::numeric_limits<int8_t>::min());
+      finalMax = maxInt.value_or(std::numeric_limits<int8_t>::max());
+    }
     break;
   case 16:
-    finalMin = minInt.value_or(std::numeric_limits<int16_t>::min());
-    finalMax = maxInt.value_or(std::numeric_limits<int16_t>::max());
+    if (isUnsigned) {
+      finalMin = minInt.value_or(std::numeric_limits<uint16_t>::min());
+      finalMax = maxInt.value_or(std::numeric_limits<uint16_t>::max());
+    } else {
+      finalMin = minInt.value_or(std::numeric_limits<int16_t>::min());
+      finalMax = maxInt.value_or(std::numeric_limits<int16_t>::max());
+    }
     break;
   case 32:
-    finalMin = minInt.value_or(std::numeric_limits<int32_t>::min());
-    finalMax = maxInt.value_or(std::numeric_limits<int32_t>::max());
+    if (isUnsigned) {
+      finalMin = minInt.value_or(std::numeric_limits<uint32_t>::min());
+      finalMax = maxInt.value_or(std::numeric_limits<uint32_t>::max());
+    } else {
+      finalMin = minInt.value_or(std::numeric_limits<int32_t>::min());
+      finalMax = maxInt.value_or(std::numeric_limits<int32_t>::max());
+    }
     break;
   case 64:
-    finalMin = minInt.value_or(std::numeric_limits<int64_t>::min());
-    finalMax = maxInt.value_or(std::numeric_limits<int64_t>::max());
+    if (isUnsigned) {
+      // uint64_t max doesn't fit in int64_t, use max int64_t as approximation
+      finalMin = minInt.value_or(0);
+      finalMax = maxInt.value_or(std::numeric_limits<int64_t>::max());
+    } else {
+      finalMin = minInt.value_or(std::numeric_limits<int64_t>::min());
+      finalMax = maxInt.value_or(std::numeric_limits<int64_t>::max());
+    }
     break;
   default:
     return rewriter.notifyMatchFailure(

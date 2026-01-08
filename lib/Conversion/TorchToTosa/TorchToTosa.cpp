@@ -10020,7 +10020,7 @@ public:
 
     TypeConverter typeConverter;
     typeConverter.addConversion([](Type type) { return type; });
-    TorchConversion::setupBackendTypeConversion(target, typeConverter);
+    TorchConversion::setupBackendTypeConversionForTosa(target, typeConverter);
 
     populateTorchToTosaConversionLegalOps(target);
 
